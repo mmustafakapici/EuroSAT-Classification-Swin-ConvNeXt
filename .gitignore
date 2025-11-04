@@ -1,0 +1,9 @@
+.venv/
+__pycache__/
+outputs/
+*.pt
+.DS_Store
+.gradio
+data/EuroSAT_RGB/
+src/__pycache__/
+
