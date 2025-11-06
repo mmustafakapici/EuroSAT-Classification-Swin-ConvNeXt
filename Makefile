@@ -3,12 +3,15 @@ CONFIG   ?= conf/config.yaml
 CKPT     ?= outputs/checkpoints/best.pt
 IMG      ?= path/to/sample.jpg
 GPUS     ?= 2
-PY       ?= python
-PIP      ?= pip
 TB_DIR   ?= outputs/tensorboard
 DATA_DIR ?= data/EuroSAT_RGB
 OUT_DIR  ?= samples
 K        ?= 1
+
+# ==== Venv Ayarları ====
+VENV     ?= .venv
+PY       ?= $(VENV)/bin/python
+PIP      ?= $(VENV)/bin/pip
 
 SHELL := /bin/bash
 .ONESHELL:
@@ -17,24 +20,41 @@ SHELL := /bin/bash
 .PHONY: help
 help:
 	@echo "Targets:"
-	@echo "  make install              # requirements.txt kur"
+	@echo "  make venv                 # .venv ortamını oluştur"
+	@echo "  make install              # venv + requirements-rocm.txt + requirements.txt kur"
 	@echo "  make download             # EuroSAT RGB indir + data klasörüne kopyala"
 	@echo "  make train                # modeli eğit (CONFIG=$(CONFIG))"
 	@echo "  make tb                   # TensorBoard aç (dir=$(TB_DIR))"
 	@echo "  make infer IMG=...        # tek görselde inference (CKPT=$(CKPT))"
 	@echo "  make ddp GPUS=2           # çoklu GPU DDP eğitim (torchrun)"
-	@echo "  make freeze               # requirements-lock.txt üret"
-	@echo "  make env                  # ortam ve sürüm bilgisi"
+	@echo "  make freeze               # requirements-lock.txt üret (venv içinden)"
+	@echo "  make env                  # ortam ve sürüm bilgisi (venv)"
 	@echo "  make clean                # çıktı/önbellek temizle"
 	@echo "  make cuda-info            # CUDA/ROCm bilgisi"
 	@echo "  make samples K=3          # her sınıftan K görseli samples/ klasörüne kopyala"
 	@echo "  make gradio               # Gradio inference UI"
 
+# ==== Venv Oluşturma ====
+..PHONY: venv
+venv:
+	@if command -v python3 >/dev/null 2>&1; then \
+		PYBIN=python3; \
+	elif command -v python >/dev/null 2>&1; then \
+		PYBIN=python; \
+	else \
+		echo "❌ Python bulunamadı. Lütfen python3 kur."; \
+		exit 1; \
+	fi; \
+	$$PYBIN -m venv $(VENV); \
+	$(VENV)/bin/python -m pip install --upgrade pip; \
+	echo "✔ Venv oluşturuldu: $(VENV)"
+
 # ==== Setup ====
 .PHONY: install
-install:
+install: venv
 	$(PIP) install -r requirements-rocm.txt
 	$(PIP) install -r requirements.txt
+	@echo "✔ Bağımlılıklar venv içine kuruldu."
 
 .PHONY: env
 env:
@@ -88,6 +108,6 @@ clean:
 	@echo "✔ Temizlendi."
 
 # ==== Gradio ====
-..PHONY: gradio
+.PHONY: gradio
 gradio:
 	PYTHONPATH=. $(PY) gradio_app/app.py

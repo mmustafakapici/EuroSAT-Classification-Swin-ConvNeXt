@@ -42,7 +42,7 @@ model:
   arch: convnext_base.fb_in22k_ft_in1k
   pretrained: true
   num_classes: 10
-  compile: false
+  compile: true
 
 # ===== Optim & Loss =====
 optim:
@@ -69,7 +69,7 @@ scheduler:
 
 # ===== Training =====
 train:
-  epochs: 50
+  epochs: 5
   mixed_precision: true
   early_stopping:
     monitor: val_loss
